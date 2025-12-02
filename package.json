@@ -2,7 +2,7 @@
   "name": "mags",
   "version": "1.0.0",
   "description": "Simple CLI/TUI torrent search.",
-  "license": "ISC",
+  "license": "MIT",
   "author": "lorenzo4000",
   "type": "commonjs",
   "main": "main.js",
