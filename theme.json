@@ -1,0 +1,12 @@
+{
+	"search_bar": { "bg": 193, "fg": "black",
+		"focus": { "bg": 191 }
+	},
+	"search_tabs": {
+		"item": { "bg": 57 },
+		"selected": { "bg": 75 }
+	},
+	"list": {
+		"selected": { "bg": 199 }
+	}
+}
