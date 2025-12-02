@@ -8,5 +8,13 @@
 	},
 	"list": {
 		"selected": { "bg": 199 }
+	},
+	"pop-up": {
+		"selected": { "bg": 199 },
+		"shadow": true,
+		"border": {
+			"type": "line",
+			"fg": "white"
+		}
 	}
 }

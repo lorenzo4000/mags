@@ -31,17 +31,11 @@ const MPV_OPTS = '--save-position-on-quit=no';
 // ** Globals **
 var options = null;
 var screen = null;
+var theme = null;
 
 var search_tabs = null;
 var search_bar = null;
 
-var list_prototype = {
-	keys: true,
-	top: 1,
-	tags: true,
-	height: '100%-2',
-	interactive: true,
-};
 
 var xml_parser = new XMLParser({
 	ignoreAttributes: false,
@@ -134,7 +128,14 @@ function add_torznab_to_list(list, torznab) {
 }
 
 function new_search(txt) {
-	let list = blessed.list(list_prototype);
+	let list = blessed.list({
+		keys: true,
+		top: 1,
+		tags: true,
+		height: '100%-2',
+		interactive: true,
+		style: theme.list,
+	});
 	screen.append(list);
 
 	search_tabs.add(txt, () => {
@@ -169,18 +170,60 @@ function new_search(txt) {
 	list.on('select', (item, index) => {
 		if(!item) return;
 
-		const link = item.dl_link;
-		get_magnet_jackett(link, (data) => {
-			screen.destroy();
+		get_magnet_jackett(item.dl_link, (data) => {
+			// pup-up options
+			let x = Math.floor(Math.random() * 75);
+			let y = Math.floor(Math.random() * 80);
+			let pop_up = blessed.list({
+				keys: true,
+				top: 1,
+				tags: true,
+				height: '20%',
+				width: `25%`,
+				left: `${x}%`,
+				top: `${y}%`,
+				interactive: true,
+				align: 'center',
+				items: [
+					"Stream with peerflix",
+					"Copy magnet link",
+				],
+				style: theme['pop-up'],
+				border: theme['pop-up'].border,
+			});
 
-			var peerflix = proc.spawn("peerflix", 
-				[PEERFLIX_OPTS, data, '--', MPV_OPTS], {
-				stdio: 'inherit',
+			pop_up.on('select', (pop_item, pop_index) => {
+				switch(pop_index) {
+					case 0: // peerflix
+						screen.destroy();
+						var peerflix = proc.spawn("peerflix", 
+							[PEERFLIX_OPTS, data, '--', MPV_OPTS], {
+							stdio: 'inherit',
+						});
+						peerflix.on('exit', (code, signal) => {
+							console.log('peerflix exited', { code, signal });
+							return process.exit(code);
+						});
+						break;
+					case 1: // magnet
+						// try to copy to clipboard
+						if(!screen.copyToClipboard(data)){
+							// if doesn't work just print it out somewhere
+							screen.destroy();
+							console.log(data);
+							return process.exit(0);
+						};
+						break;
+				}
 			});
-			peerflix.on('exit', (code, signal) => {
-				console.log('peerflix exited', { code, signal });
-				return process.exit(code);
+			pop_up.key('escape', (ch, key) => {
+				pop_up.destroy();
+				screen.render();
 			});
+
+			screen.append(pop_up);
+			pop_up.focus();
+			screen.render();
 		});
 	});
 }
@@ -275,7 +318,7 @@ function main(argv) {
 	for(const dir of PATH) {
 		try {
 			let theme_file = fs.readFileSync(`${dir}/${THEME_FILENAME}`).toString();
-			var theme = JSON.parse(theme_file);
+			theme = JSON.parse(theme_file);
 		} catch(e) {
 			if(e.code == 'ENOENT') 
 				continue;
@@ -313,7 +356,6 @@ function main(argv) {
 	screen.append(search_tabs);
 	screen.append(search_bar);
 
-	list_prototype.style = theme.list;
 
 	// * History *
 	var history = [];
@@ -369,7 +411,7 @@ function main(argv) {
 
 		screen.render();
 	});
-	screen.key(['escape', 'q', 'C-c'], (ch, key) => {
+	screen.key(['q', 'C-c'], (ch, key) => {
 		// save new history
 		try {
 			fs.appendFileSync(HISTORY_FILENAME, 
