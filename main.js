@@ -412,18 +412,23 @@ function main(argv) {
 		screen.render();
 	});
 	screen.key(['q', 'C-c'], (ch, key) => {
-		// save new history
-		try {
-			fs.appendFileSync(HISTORY_FILENAME, 
-				history.slice(old_history_length).join('\n') + '\n');
-		} catch(e) {
-			console.warn("warn: could not save search to history file:", e.message);
-		}
-
 		return process.exit(0);
+	});
+
+	process.on('exit', (code) => {
+		// save new history if organic exit
+		if(!code) { 
+			try {
+				fs.appendFileSync(HISTORY_FILENAME, 
+					history.slice(old_history_length).join('\n') + '\n');
+			} catch(e) {
+				console.warn("warn: could not save search to history file:", e.message);
+			}
+		}
 	});
 
 	screen.render();
 }
 
 main(process.argv);
+
